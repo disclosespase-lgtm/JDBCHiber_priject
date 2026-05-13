@@ -32,4 +32,39 @@ public class Util {
         }
         return connection;
     }
+
+    //Hibernate
+    private static SessionFactory sessionFactory;
+    static {
+        Logger.getLogger("org.hibernate").setLevel(Level.SEVERE);
+    }
+    public static SessionFactory getSessionFactory() {
+        if (sessionFactory == null) {
+            try {
+                Configuration configuration = new Configuration();
+                Properties properties = new Properties();
+                properties.put(Environment.DRIVER, "org.postgresql.Driver");
+                properties.put(Environment.URL, URL);
+                properties.put(Environment.USER, USERNAME);
+                properties.put(Environment.PASS, PASSWORD);
+
+
+                properties.put(Environment.DIALECT, "org.hibernate.dialect.PostgreSQLDialect");
+                properties.put(Environment.SHOW_SQL, "false");
+                properties.put(Environment.HBM2DDL_AUTO, "update");
+
+                sessionFactory = new Configuration()
+                        .setProperties(properties)
+                        .addAnnotatedClass(User.class)
+                        .buildSessionFactory();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        return sessionFactory;
+    }
+
+    public static void main(String[] args) {
+        getSessionFactory();
+    }
 }
