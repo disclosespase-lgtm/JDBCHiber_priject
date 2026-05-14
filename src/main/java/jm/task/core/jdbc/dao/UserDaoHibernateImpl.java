@@ -3,9 +3,8 @@ package jm.task.core.jdbc.dao;
 import jm.task.core.jdbc.model.User;
 import jm.task.core.jdbc.util.Util;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.HibernateException;
 import org.hibernate.Session;
-
-import java.sql.SQLException;
 import java.util.List;
 
 @Slf4j
@@ -26,7 +25,7 @@ public class UserDaoHibernateImpl implements UserDao {
             session.createNativeQuery(sql).executeUpdate();
             session.getTransaction().commit();
             log.info("Таблица создана");
-        } catch (IllegalStateException e) {
+        } catch (HibernateException e) {
             log.error("Ошибка при создании таблицы ", e);
         }
     }
@@ -39,8 +38,8 @@ public class UserDaoHibernateImpl implements UserDao {
             session.beginTransaction();
             session.createNativeQuery(sql).executeUpdate();
             session.getTransaction().commit();
-            System.out.println("Таблица удалена -_-");
-        } catch (IllegalStateException e) {
+            log.info("Таблица удалена");
+        } catch (HibernateException e) {
             log.error("Ошибка при удалении таблицы ", e);
         }
     }
@@ -49,13 +48,11 @@ public class UserDaoHibernateImpl implements UserDao {
     public void saveUser(String name, String lastName, byte age) {
         try(Session session = Util.getSessionFactory().openSession()){
             session.beginTransaction();
-
             User user = new User(name,lastName,age);
             session.save(user);
-
             session.getTransaction().commit();
             log.info("User с именем " + name + " добавлен в базу данных");
-        }catch (IllegalStateException e) {
+        }catch (HibernateException e) {
             log.error("Сохранение пользорвателя не удалось ", e);
         }
     }
@@ -68,7 +65,7 @@ public class UserDaoHibernateImpl implements UserDao {
             if (user!=null){session.remove(user);}
             session.getTransaction().commit();
            log.info("Пользователь с id: " + id + " удален");
-        } catch (IllegalStateException e) {
+        } catch (HibernateException e) {
             log.error("Ошибка при удалении пользователя ", e);
         }
     }
@@ -77,7 +74,7 @@ public class UserDaoHibernateImpl implements UserDao {
     public List<User> getAllUsers() {
         try(Session session = Util.getSessionFactory().openSession()){
             return session.createQuery("FROM User",User.class).list();
-        } catch (IllegalStateException e) {
+        } catch (HibernateException e) {
             log.error("Ошибка при получении всех пользователей ", e);
             throw new IllegalStateException(e);
         }
@@ -90,7 +87,7 @@ public class UserDaoHibernateImpl implements UserDao {
             session.createQuery("DELETE FROM User").executeUpdate();
             session.getTransaction().commit();
             log.info("Все пользователи удалены из таблицы");
-        }catch (IllegalStateException e) {
+        }catch (HibernateException e) {
             log.error("Ошибка при очистке таблицы ", e);
         }
     }
