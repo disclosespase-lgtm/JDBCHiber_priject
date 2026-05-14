@@ -2,12 +2,13 @@ package jm.task.core.jdbc.dao;
 
 import jm.task.core.jdbc.model.User;
 import jm.task.core.jdbc.util.Util;
+import lombok.extern.slf4j.Slf4j;
 import org.hibernate.Session;
-import org.hibernate.Transaction;
 
+import java.sql.SQLException;
 import java.util.List;
-import java.util.logging.Logger;
 
+@Slf4j
 public class UserDaoHibernateImpl implements UserDao {
     public UserDaoHibernateImpl() {
     }
@@ -17,21 +18,16 @@ public class UserDaoHibernateImpl implements UserDao {
         String sql = "CREATE TABLE IF NOT EXISTS users (" +
                 "id BIGSERIAL PRIMARY KEY," +
                 "name VARCHAR(100)," +
-                "lastName VARCHAR(100), " +
+                "last_name VARCHAR(100), " +
                 "age SMALLINT) ";
 
-        Transaction transaction = null;
-        try (
-                Session session = Util.getSessionFactory().openSession()) {
-            transaction = session.beginTransaction();
+        try (Session session = Util.getSessionFactory().openSession()) {
+            session.beginTransaction();
             session.createNativeQuery(sql).executeUpdate();
-            transaction.commit();
-            System.out.println("Таблица создана -0-");
-        } catch (Exception e) {
-            if (transaction != null) {
-                transaction.rollback();
-            }
-            e.printStackTrace();
+            session.getTransaction().commit();
+            log.info("Таблица создана");
+        } catch (IllegalStateException e) {
+            log.error("Ошибка при создании таблицы ", e);
         }
     }
 
@@ -39,54 +35,41 @@ public class UserDaoHibernateImpl implements UserDao {
     @Override
     public void dropUsersTable() {
         String sql = "DROP TABLE IF EXISTS users";
-
-        Transaction transaction = null;
         try(Session session = Util.getSessionFactory().openSession()){
-            transaction = session.beginTransaction();
+            session.beginTransaction();
             session.createNativeQuery(sql).executeUpdate();
-            transaction.commit();
+            session.getTransaction().commit();
             System.out.println("Таблица удалена -_-");
-        } catch (Exception e) {
-            if (transaction != null) {
-                transaction.rollback();
-            }
-            e.printStackTrace();
+        } catch (IllegalStateException e) {
+            log.error("Ошибка при удалении таблицы ", e);
         }
     }
 
     @Override
     public void saveUser(String name, String lastName, byte age) {
-        Transaction transaction = null;
         try(Session session = Util.getSessionFactory().openSession()){
-            transaction = session.beginTransaction();
+            session.beginTransaction();
 
             User user = new User(name,lastName,age);
             session.save(user);
 
-            transaction.commit();
-            System.out.println("User с именем " + name + " добавлен");
-        }catch (Exception e) {
-            if (transaction != null) {
-                transaction.rollback();
-            }
-            e.printStackTrace();
+            session.getTransaction().commit();
+            log.info("User с именем " + name + " добавлен в базу данных");
+        }catch (IllegalStateException e) {
+            log.error("Сохранение пользорвателя не удалось ", e);
         }
     }
 
     @Override
     public void removeUserById(long id) {
-        Transaction transaction=null;
         try(Session session = Util.getSessionFactory().openSession()){
-            transaction = session.beginTransaction();
+            session.beginTransaction();
             User user = session.get(User.class,id);
-            session.remove(user);
-            transaction.commit();
-            System.out.println("Пользоватьель с id " + id + " удален");
-        } catch (Exception e) {
-            if(transaction != null) {
-                transaction.rollback();
-            }
-            e.printStackTrace();
+            if (user!=null){session.remove(user);}
+            session.getTransaction().commit();
+           log.info("Пользователь с id: " + id + " удален");
+        } catch (IllegalStateException e) {
+            log.error("Ошибка при удалении пользователя ", e);
         }
     }
 
@@ -94,22 +77,21 @@ public class UserDaoHibernateImpl implements UserDao {
     public List<User> getAllUsers() {
         try(Session session = Util.getSessionFactory().openSession()){
             return session.createQuery("FROM User",User.class).list();
+        } catch (IllegalStateException e) {
+            log.error("Ошибка при получении всех пользователей ", e);
+            throw new IllegalStateException(e);
         }
     }
 
     @Override
     public void cleanUsersTable() {
-        Transaction transaction = null;
         try(Session session = Util.getSessionFactory().openSession()){
-            transaction = session.beginTransaction();
+            session.beginTransaction();
             session.createQuery("DELETE FROM User").executeUpdate();
-            transaction.commit();
-            System.out.println(  "Таблица очищена");
-        }catch (Exception e) {
-            if (transaction != null) {
-                transaction.rollback();
-            }
-            e.printStackTrace();
+            session.getTransaction().commit();
+            log.info("Все пользователи удалены из таблицы");
+        }catch (IllegalStateException e) {
+            log.error("Ошибка при очистке таблицы ", e);
         }
     }
 }
