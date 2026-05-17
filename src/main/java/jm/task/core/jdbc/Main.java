@@ -30,9 +30,9 @@ public class Main {
         System.out.println(listUsers.size());
 
         //Очистили табле
-        userService.cleanUsersTable();
+//        userService.cleanUsersTable();
         //Удалили
-        userService.dropUsersTable();
+//        userService.dropUsersTable();
 
     }
 }
